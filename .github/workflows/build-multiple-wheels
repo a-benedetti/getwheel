@@ -1,0 +1,47 @@
+name: build-multiple-wheels
+on:
+  workflow_dispatch:
+
+jobs:
+  win311:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          architecture: "x64"
+
+      - name: Install HDF5 via vcpkg
+        shell: pwsh
+        run: |
+          git clone https://github.com/microsoft/vcpkg $env:USERPROFILE\vcpkg
+          & $env:USERPROFILE\vcpkg\bootstrap-vcpkg.bat
+          & $env:USERPROFILE\vcpkg\vcpkg.exe install hdf5:x64-windows
+          echo "VCPKG_ROOT=$env:USERPROFILE\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "HDF5_DIR=$env:USERPROFILE\vcpkg\installed\x64-windows" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "INCLUDE=$env:USERPROFILE\vcpkg\installed\x64-windows\include;$env:INCLUDE" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "LIB=$env:USERPROFILE\vcpkg\installed\x64-windows\lib;$env:LIB" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prep build toolchain
+        run: python -m pip install -U pip setuptools wheel cython "numpy<2"  # tables 3.7 wants old numpy
+
+      - name: Build wheels (alphastats + deps)
+        shell: pwsh
+        run: |
+          # pure python
+          pip wheel alphastats==0.7.1 --no-deps -w dist
+
+          # binary deps pinned by alphastats
+          pip wheel tables==3.7.0 --no-deps -w dist
+          pip wheel numpy==1.23.5 scipy==1.10.1 pandas==2.0.2 scikit-learn==1.2.2 statsmodels==0.14.0 --no-deps -w dist
+          pip wheel numba==0.57.0 numba-stats==0.5.0 --no-deps -w dist
+          pip wheel pingouin==0.5.3 pyteomics==4.6.0 plotly==5.15.0 sklearn-pandas==2.2.0 openpyxl>=3.0.10 --no-deps -w dist
+          pip wheel anndata==0.9.1 diffxpy==0.7.4 gprofiler-official==1.0.0 kaleido==0.2.1 --no-deps -w dist
+          # add any others pip tries to build from source
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: alphastats-wheels
+          path: dist\*.whl
+          if-no-files-found: error
