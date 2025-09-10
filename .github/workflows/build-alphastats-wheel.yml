@@ -1,0 +1,21 @@
+name: build-alphastats-wheel
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          architecture: "x64"
+      - name: Build wheel
+        run: |
+          python -m pip install -U pip setuptools wheel cython numpy
+          python -m pip wheel alphastats==0.7.1 --no-deps -w dist
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: alphastats-wheels
+          path: dist\*.whl
+          if-no-files-found: error
