@@ -1,4 +1,4 @@
-name: build-alphastats-wheels
+name: build-alphastats-wheel
 on:
   workflow_dispatch:
 jobs:
@@ -9,14 +9,13 @@ jobs:
         with:
           python-version: "3.11"
           architecture: "x64"
-      - name: Build wheels
+      - name: Build wheel
         run: |
           python -m pip install -U pip setuptools wheel cython numpy
-          pip wheel alphastats==0.7.1 --no-deps -w dist
-          pip wheel tables==3.7.0 numba==0.57.0 numpy==1.23.5 scipy==1.10.1 scikit-learn==1.2.2 statsmodels==0.14.0 pandas==2.0.2 --no-deps -w dist
-      - name: Upload wheels
+          python -m pip wheel alphastats==0.7.1 --no-deps -w dist
+      - name: Upload wheel
         uses: actions/upload-artifact@v4
         with:
           name: alphastats-wheels
           path: dist\*.whl
-          if-no-files-found: error
+          if-no-files-found: err
