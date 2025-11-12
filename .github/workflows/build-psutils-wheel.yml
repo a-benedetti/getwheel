@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.9"
-          architecture: "x64"   # or "x86" if you specifically need 32-bit
+          architecture: "x86"   # or "x86" if you specifically need 32-bit
 
       - name: Build wheel for psutil
         run: |
