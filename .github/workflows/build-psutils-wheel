@@ -1,0 +1,27 @@
+name: build-psutil-wheel
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          architecture: "x64"   # or "x86" if you specifically need 32-bit
+
+      - name: Build wheel for psutil
+        run: |
+          python -m pip install -U pip setuptools wheel
+          python -m pip wheel psutil --no-deps -w psutil-wheels
+
+      - name: Upload psutil wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: psutil-wheels
+          path: psutil-wheels\*.whl
+          if-no-files-found: error
